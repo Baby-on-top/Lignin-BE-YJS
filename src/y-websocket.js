@@ -15,6 +15,7 @@ import * as awarenessProtocol from 'y-protocols/awareness'
 import { Observable } from 'lib0/observable'
 import * as math from 'lib0/math'
 import * as url from 'lib0/url'
+import { MongodbPersistence } from './y-mongodb'
 
 export const messageSync = 0
 export const messageQueryAwareness = 3

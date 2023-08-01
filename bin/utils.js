@@ -1,3 +1,4 @@
+const MongodbPersistence = require('y-mongodb')
 const Y = require('yjs')
 const syncProtocol = require('y-protocols/dist/sync.cjs')
 const awarenessProtocol = require('y-protocols/dist/awareness.cjs')
@@ -19,27 +20,30 @@ const wsReadyStateOpen = 1
 const wsReadyStateClosing = 2 // eslint-disable-line
 const wsReadyStateClosed = 3 // eslint-disable-line
 
+const location = 'mongodb://127.0.0.1:27017/y-mongodb-test'
+const collection = 'mongodb://127.0.0.1:27017/y-transactions'
+
 // disable gc when using snapshots!
 const gcEnabled = process.env.GC !== 'false' && process.env.GC !== '0'
-const persistenceDir = process.env.YPERSISTENCE
+// const persistenceDir = process.env.YPERSISTENCE
 /**
  * @type {{bindState: function(string,WSSharedDoc):void, writeState:function(string,WSSharedDoc):Promise<any>, provider: any}|null}
  */
 let persistence = null
-if (typeof persistenceDir === 'string') {
-  console.info('Persisting documents to "' + persistenceDir + '"')
+if (typeof location === 'string') {
+  console.info('Persisting documents to "' + location + '"')
   // @ts-ignore
-  const LeveldbPersistence = require('y-leveldb').LeveldbPersistence
-  const ldb = new LeveldbPersistence(persistenceDir)
+  const MongodbPersistence = require('y-mongodb').MongodbPersistence
+  const mdb = new MongodbPersistence(location, collection)
   persistence = {
-    provider: ldb,
+    provider: mdb,
     bindState: async (docName, ydoc) => {
-      const persistedYdoc = await ldb.getYDoc(docName)
+      const persistedYdoc = await mdb.getYDoc(docName)
       const newUpdates = Y.encodeStateAsUpdate(ydoc)
-      ldb.storeUpdate(docName, newUpdates)
+      mdb.storeUpdate(docName, newUpdates)
       Y.applyUpdate(ydoc, Y.encodeStateAsUpdate(persistedYdoc))
       ydoc.on('update', update => {
-        ldb.storeUpdate(docName, update)
+        mdb.storeUpdate(docName, update)
       })
     },
     writeState: async (docName, ydoc) => {}
